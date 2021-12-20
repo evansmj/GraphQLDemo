@@ -1,0 +1,8 @@
+query CountryLanguage {
+  countries {
+    name
+    languages {
+      name
+    }
+  }
+}
