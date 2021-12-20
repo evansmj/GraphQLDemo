@@ -3,8 +3,8 @@ package com.oldgoat5.graphqldemo.language
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.apollographql.apollo3.ApolloClient
-import com.apollographql.apollo3.api.ApolloResponse
 import com.oldgoat5.CountryLanguageQuery
+import com.oldgoat5.graphqldemo.common.GraphQLViewModel
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.*
 import kotlinx.coroutines.launch
@@ -12,17 +12,21 @@ import java.lang.Exception
 import javax.inject.Inject
 
 @HiltViewModel
-class LanguageViewModel @Inject constructor(private val apolloClient: ApolloClient) : ViewModel() {
+class LanguageViewModel @Inject constructor(private val apolloClient: ApolloClient) : GraphQLViewModel() {
 
     private val languageState = MutableStateFlow(
         LanguageState<CountryLanguageQuery.Data>(Status.LOADING, null, null)
     )
 
+    override fun onCreate() {
+        super.onCreate()
+        getAllLanguages()
+    }
+
     fun getLanguageState(): StateFlow<LanguageState<CountryLanguageQuery.Data>> {
         return languageState
     }
 
-    //move to onCreate() interface with Activity
     fun getAllLanguages() {
         languageState.value = LanguageState.loading()
 

@@ -18,6 +18,7 @@ import com.oldgoat5.CountryLanguageQuery
 import com.oldgoat5.graphqldemo.R
 import com.oldgoat5.graphqldemo.common.GraphQLRecyclerAdapter
 import com.oldgoat5.graphqldemo.common.GraphQLRecyclerViewHolder
+import com.oldgoat5.graphqldemo.common.ViewModelActivity
 import com.oldgoat5.graphqldemo.common.observers.RecyclerAdapterObserver
 import com.oldgoat5.graphqldemo.common.observers.VisibilityObserver
 import dagger.hilt.android.AndroidEntryPoint
@@ -25,9 +26,9 @@ import kotlinx.coroutines.flow.collect
 import kotlinx.coroutines.launch
 
 @AndroidEntryPoint
-class LanguageActivity : AppCompatActivity() {
+class LanguageActivity : ViewModelActivity<LanguageViewModel>() {
 
-    private val viewModel: LanguageViewModel by viewModels()
+    override val viewModel: LanguageViewModel by viewModels()
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)

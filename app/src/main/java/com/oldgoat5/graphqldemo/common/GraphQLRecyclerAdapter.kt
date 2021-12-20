@@ -10,6 +10,7 @@ abstract class GraphQLRecyclerAdapter<T, H: GraphQLRecyclerViewHolder<T>> : Recy
 
     fun setItems(items: List<T>) {
         this.itemList = items
+        notifyDataSetChanged() //todo use real comparisons
     }
 
     override fun onBindViewHolder(holder: H, position: Int) {

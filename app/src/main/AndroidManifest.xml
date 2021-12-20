@@ -2,6 +2,8 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
     package="com.oldgoat5.graphqldemo">
 
+    <uses-permission android:name="android.permission.INTERNET" />
+
     <application
         android:name=".GraphQLDemoApplication"
         android:allowBackup="true"
