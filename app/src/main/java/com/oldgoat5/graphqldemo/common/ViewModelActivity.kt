@@ -2,6 +2,7 @@ package com.oldgoat5.graphqldemo.common
 
 import android.os.Bundle
 import android.os.PersistableBundle
+import androidx.activity.ComponentActivity
 import androidx.activity.viewModels
 import androidx.appcompat.app.AppCompatActivity
 import androidx.lifecycle.ViewModel

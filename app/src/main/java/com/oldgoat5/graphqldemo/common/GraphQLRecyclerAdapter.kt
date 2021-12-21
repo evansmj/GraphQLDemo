@@ -1,23 +1,48 @@
 package com.oldgoat5.graphqldemo.common
 
-import android.view.LayoutInflater
-import android.view.ViewGroup
+import androidx.recyclerview.widget.DiffUtil
 import androidx.recyclerview.widget.RecyclerView
+import timber.log.Timber
 
-abstract class GraphQLRecyclerAdapter<T, H: GraphQLRecyclerViewHolder<T>> : RecyclerView.Adapter<H>() {
+abstract class GraphQLRecyclerAdapter<T, H : GraphQLRecyclerViewHolder<T>, D : LazyDiffCallback<T>>
+    : RecyclerView.Adapter<H>() {
 
-    protected var itemList = emptyList<T>()
+    protected abstract val diffCallback: D
 
-    fun setItems(items: List<T>) {
-        this.itemList = items
-        notifyDataSetChanged() //todo use real comparisons
+    private var existingItems = emptyList<T>()
+
+    fun setItems(newItems: List<T>) {
+        this.diffCallback.oldList = existingItems
+        this.diffCallback.newList = newItems
+
+        val diffResult = DiffUtil.calculateDiff(this.diffCallback, true)
+
+        this.existingItems = newItems
+        diffResult.dispatchUpdatesTo(this)
     }
 
     override fun onBindViewHolder(holder: H, position: Int) {
-        this.itemList[position]?.let { holder.onBind(it) }
+        this.existingItems[position].let { holder.onBind(it) }
     }
 
     override fun getItemCount(): Int {
-        return this.itemList.size
+        return this.existingItems.size
     }
+}
+
+abstract class LazyDiffCallback<T> : DiffUtil.Callback() {
+    private var _oldList: List<T> = emptyList()
+    private var _newList: List<T> = emptyList()
+
+    var oldList: List<T>
+        get() = _oldList
+        set(value) {
+            _oldList = value
+        }
+
+    var newList: List<T>
+        get() = _newList
+        set(value) {
+            _newList = value
+        }
 }

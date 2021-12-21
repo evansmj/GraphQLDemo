@@ -4,7 +4,6 @@ import android.os.Bundle
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
-import android.widget.LinearLayout
 import android.widget.ProgressBar
 import android.widget.TextView
 import androidx.activity.ComponentActivity
@@ -12,12 +11,14 @@ import androidx.activity.viewModels
 import androidx.appcompat.app.AppCompatActivity
 import androidx.appcompat.widget.Toolbar
 import androidx.lifecycle.lifecycleScope
+import androidx.recyclerview.widget.DiffUtil
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import com.oldgoat5.CountryLanguageQuery
 import com.oldgoat5.graphqldemo.R
 import com.oldgoat5.graphqldemo.common.GraphQLRecyclerAdapter
 import com.oldgoat5.graphqldemo.common.GraphQLRecyclerViewHolder
+import com.oldgoat5.graphqldemo.common.LazyDiffCallback
 import com.oldgoat5.graphqldemo.common.ViewModelActivity
 import com.oldgoat5.graphqldemo.common.observers.RecyclerAdapterObserver
 import com.oldgoat5.graphqldemo.common.observers.VisibilityObserver
@@ -37,11 +38,10 @@ class LanguageActivity : ViewModelActivity<LanguageViewModel>() {
         val languageRecyclerView = findViewById<RecyclerView>(R.id.language_recycler_view)
         val progressBar = findViewById<ProgressBar>(R.id.language_progress_bar)
 
-        supportActionBar?.title = "Languages"
+        actionBar?.title = "Languages"
 
         val languageAdapter = LanguageAdapter()
 
-        languageRecyclerView.layoutManager = LinearLayoutManager(applicationContext)
         languageRecyclerView.adapter = languageAdapter
 
         val loadingObserver = VisibilityObserver(progressBar)
@@ -56,13 +56,36 @@ class LanguageActivity : ViewModelActivity<LanguageViewModel>() {
     }
 }
 
-class LanguageAdapter : GraphQLRecyclerAdapter<CountryLanguageQuery.Country?, LanguageViewHolder>() {
+class LanguageAdapter
+    : GraphQLRecyclerAdapter<CountryLanguageQuery.Country?, LanguageViewHolder, LanguageAdapter.LanguageDiffCallback<CountryLanguageQuery.Country?>>() {
+
+    override val diffCallback: LanguageDiffCallback<CountryLanguageQuery.Country?> = LanguageDiffCallback()
 
     override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): LanguageViewHolder {
         val view = LayoutInflater.from(parent.context).inflate(R.layout.country_item, parent, false)
         return LanguageViewHolder(view)
     }
 
+    class LanguageDiffCallback<T: CountryLanguageQuery.Country?> : LazyDiffCallback<T>() {
+
+        override fun getOldListSize(): Int {
+            return oldList.size
+        }
+
+        override fun getNewListSize(): Int {
+            return newList.size
+        }
+
+        override fun areItemsTheSame(oldItemPosition: Int, newItemPosition: Int): Boolean {
+            return oldList[oldItemPosition]?.code == newList[newItemPosition]?.code
+        }
+
+        override fun areContentsTheSame(oldItemPosition: Int, newItemPosition: Int): Boolean {
+            return oldList[oldItemPosition]?.code == newList[newItemPosition]?.code
+                    && oldList[oldItemPosition]?.name == newList[newItemPosition]?.name
+                    && oldList[oldItemPosition]?.languages == newList[newItemPosition]?.languages
+        }
+    }
 }
 
 class LanguageViewHolder(itemView: View) : GraphQLRecyclerViewHolder<CountryLanguageQuery.Country?>(itemView) {

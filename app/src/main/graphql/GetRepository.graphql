@@ -3,6 +3,8 @@ query CountryLanguage {
     name
     languages {
       name
+      code
     }
+    code
   }
 }

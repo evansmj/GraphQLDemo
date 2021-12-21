@@ -8,6 +8,7 @@ import com.oldgoat5.graphqldemo.common.GraphQLViewModel
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.*
 import kotlinx.coroutines.launch
+import timber.log.Timber
 import java.lang.Exception
 import javax.inject.Inject
 
@@ -27,9 +28,8 @@ class LanguageViewModel @Inject constructor(private val apolloClient: ApolloClie
         return languageState
     }
 
-    fun getAllLanguages() {
+    private fun getAllLanguages() {
         languageState.value = LanguageState.loading()
-
 
         viewModelScope.launch {
             apolloClient.query(CountryLanguageQuery())
