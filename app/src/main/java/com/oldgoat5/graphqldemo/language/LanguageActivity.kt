@@ -6,16 +6,13 @@ import android.view.View
 import android.view.ViewGroup
 import android.widget.ProgressBar
 import android.widget.TextView
-import androidx.activity.ComponentActivity
 import androidx.activity.viewModels
-import androidx.appcompat.app.AppCompatActivity
-import androidx.appcompat.widget.Toolbar
+import androidx.appcompat.widget.SwitchCompat
 import androidx.lifecycle.lifecycleScope
-import androidx.recyclerview.widget.DiffUtil
-import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import com.oldgoat5.CountryLanguageQuery
 import com.oldgoat5.graphqldemo.R
+import com.oldgoat5.graphqldemo.api.countrylanguage.CountryLanguageInteractor
 import com.oldgoat5.graphqldemo.common.GraphQLRecyclerAdapter
 import com.oldgoat5.graphqldemo.common.GraphQLRecyclerViewHolder
 import com.oldgoat5.graphqldemo.common.LazyDiffCallback
@@ -24,6 +21,7 @@ import com.oldgoat5.graphqldemo.common.observers.RecyclerAdapterObserver
 import com.oldgoat5.graphqldemo.common.observers.VisibilityObserver
 import dagger.hilt.android.AndroidEntryPoint
 import kotlinx.coroutines.flow.collect
+import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.launch
 
 @AndroidEntryPoint
@@ -37,27 +35,38 @@ class LanguageActivity : ViewModelActivity<LanguageViewModel>() {
 
         val languageRecyclerView = findViewById<RecyclerView>(R.id.language_recycler_view)
         val progressBar = findViewById<ProgressBar>(R.id.language_progress_bar)
+        val sortSwitch = findViewById<SwitchCompat>(R.id.sort_switch)
 
         actionBar?.title = "Languages"
 
-        val languageAdapter = LanguageAdapter()
+        sortSwitch.setOnCheckedChangeListener { buttonView, isChecked ->
+            viewModel.setReverseSortEnabled(
+                isChecked
+            )
+        }
 
+        val languageAdapter = LanguageAdapter()
         languageRecyclerView.adapter = languageAdapter
 
         val loadingObserver = VisibilityObserver(progressBar)
         val recyclerAdapterObserver = RecyclerAdapterObserver(languageAdapter)
 
         lifecycleScope.launch {
-            viewModel.getLanguageState().collect {
-                loadingObserver.onNext(it.status == Status.LOADING)
-                it.data?.countries?.let { items -> recyclerAdapterObserver.onNext(items) }
+            viewModel.getLanguageLoadingState().collect {
+                loadingObserver.onNext(it == CountryLanguageInteractor.Status.LOADING)
+            }
+        }
+
+        lifecycleScope.launch {
+            viewModel.getLanguages().collect {
+                it.let { items -> recyclerAdapterObserver.onNext(items) }
             }
         }
     }
 }
 
-class LanguageAdapter
-    : GraphQLRecyclerAdapter<CountryLanguageQuery.Country?, LanguageViewHolder, LanguageAdapter.LanguageDiffCallback<CountryLanguageQuery.Country?>>() {
+class LanguageAdapter :
+    GraphQLRecyclerAdapter<CountryLanguageQuery.Country?, LanguageViewHolder, LanguageAdapter.LanguageDiffCallback<CountryLanguageQuery.Country?>>() {
 
     override val diffCallback: LanguageDiffCallback<CountryLanguageQuery.Country?> = LanguageDiffCallback()
 
@@ -66,7 +75,7 @@ class LanguageAdapter
         return LanguageViewHolder(view)
     }
 
-    class LanguageDiffCallback<T: CountryLanguageQuery.Country?> : LazyDiffCallback<T>() {
+    class LanguageDiffCallback<T : CountryLanguageQuery.Country?> : LazyDiffCallback<T>() {
 
         override fun getOldListSize(): Int {
             return oldList.size
@@ -91,8 +100,13 @@ class LanguageAdapter
 class LanguageViewHolder(itemView: View) : GraphQLRecyclerViewHolder<CountryLanguageQuery.Country?>(itemView) {
 
     private var countryTextView: TextView = itemView.findViewById(R.id.country_text_view)
+    private var languageTextView: TextView = itemView.findViewById(R.id.language_text_view)
 
     override fun onBind(item: CountryLanguageQuery.Country?) {
         item?.let { countryTextView.text = item.name }
+        item?.languages?.let {
+            languageTextView.visibility = View.VISIBLE
+            languageTextView.text = item.languages.map { it?.name }.joinToString("\n")
+        }
     }
 }

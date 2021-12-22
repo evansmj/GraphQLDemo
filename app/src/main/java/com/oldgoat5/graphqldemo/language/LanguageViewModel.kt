@@ -1,23 +1,23 @@
 package com.oldgoat5.graphqldemo.language
 
-import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.apollographql.apollo3.ApolloClient
 import com.oldgoat5.CountryLanguageQuery
+import com.oldgoat5.graphqldemo.api.countrylanguage.CountryLanguageInteractor
+import com.oldgoat5.graphqldemo.api.countrylanguage.LanguageState
 import com.oldgoat5.graphqldemo.common.GraphQLViewModel
+import com.oldgoat5.graphqldemo.common.mapToStateFlow
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.*
 import kotlinx.coroutines.launch
-import timber.log.Timber
-import java.lang.Exception
+import okhttp3.internal.notifyAll
 import javax.inject.Inject
 
 @HiltViewModel
-class LanguageViewModel @Inject constructor(private val apolloClient: ApolloClient) : GraphQLViewModel() {
+class LanguageViewModel @Inject constructor(
+    private val countryLanguageInteractor: CountryLanguageInteractor
+) : GraphQLViewModel() {
 
-    private val languageState = MutableStateFlow(
-        LanguageState<CountryLanguageQuery.Data>(Status.LOADING, null, null)
-    )
+    private var isReverseSortEnabled = MutableStateFlow(false)
 
     override fun onCreate() {
         super.onCreate()
@@ -25,44 +25,33 @@ class LanguageViewModel @Inject constructor(private val apolloClient: ApolloClie
     }
 
     fun getLanguageState(): StateFlow<LanguageState<CountryLanguageQuery.Data>> {
-        return languageState
+        return countryLanguageInteractor.getLanguageState()
+    }
+
+    fun getLanguageLoadingState(): StateFlow<CountryLanguageInteractor.Status> {
+        return countryLanguageInteractor.getLanguageState()
+            .mapToStateFlow(viewModelScope, CountryLanguageInteractor.Status.LOADING) { it.status }
+    }
+
+    //todo combine with isReverseSortEnabled
+    fun getLanguages(): StateFlow<List<CountryLanguageQuery.Country?>> {
+        return countryLanguageInteractor.getLanguageState()
+            .mapToStateFlow(viewModelScope, emptyList()) {
+                if (it.data?.countries != null) {
+                    return@mapToStateFlow (it.data.countries.reversed())
+                } else {
+                    return@mapToStateFlow (emptyList<CountryLanguageQuery.Country?>())
+                }
+            }
+    }
+
+    fun setReverseSortEnabled(isChecked: Boolean) {
+        this.isReverseSortEnabled.value = isChecked
     }
 
     private fun getAllLanguages() {
-        languageState.value = LanguageState.loading()
-
         viewModelScope.launch {
-            apolloClient.query(CountryLanguageQuery())
-                .toFlow()
-                .catch {
-                    languageState.value = LanguageState.error(Exception(it))
-                }
-                .collect {
-                    languageState.value = LanguageState.success(it.data)
-                }
+            countryLanguageInteractor.fetchCountryLanguage()
         }
     }
-}
-
-data class LanguageState<out T>(val status: Status, val data: T?, val exception: Exception?) {
-
-    companion object {
-        fun <T> success(data: T?): LanguageState<T> {
-            return LanguageState(Status.SUCCESS, data, null)
-        }
-
-        fun <T> error(exception: Exception): LanguageState<T> {
-            return LanguageState(Status.ERROR, null, exception)
-        }
-
-        fun <T> loading(): LanguageState<T> {
-            return LanguageState(Status.LOADING, null, null)
-        }
-    }
-}
-
-enum class Status {
-    SUCCESS,
-    ERROR,
-    LOADING
 }

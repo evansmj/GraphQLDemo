@@ -1,4 +1,5 @@
 <resources>
     <string name="app_name">GraphQLDemo</string>
     <string name="languages">Languages</string>
+    <string name="sort_in_reverse_order">Sort in reverse order</string>
 </resources>
