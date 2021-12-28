@@ -1,4 +1,5 @@
 <resources>
     <string name="app_name">GraphQLDemo</string>
     <string name="languages">Languages</string>
+    <string name="diff_shift_to_reverse_order">Diff shift to reverse order</string>
 </resources>
