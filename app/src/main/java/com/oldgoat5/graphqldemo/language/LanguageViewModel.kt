@@ -5,6 +5,7 @@ import com.oldgoat5.CountryLanguageQuery
 import com.oldgoat5.graphqldemo.api.countrylanguage.CountryLanguageInteractor
 import com.oldgoat5.graphqldemo.api.countrylanguage.LanguageState
 import com.oldgoat5.graphqldemo.common.GraphQLViewModel
+import com.oldgoat5.graphqldemo.common.combineToStateFlow
 import com.oldgoat5.graphqldemo.common.mapToStateFlow
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.*
@@ -24,23 +25,27 @@ class LanguageViewModel @Inject constructor(
         getAllLanguages()
     }
 
-    fun getLanguageState(): StateFlow<LanguageState<CountryLanguageQuery.Data>> {
-        return countryLanguageInteractor.getLanguageState()
-    }
-
     fun getLanguageLoadingState(): StateFlow<CountryLanguageInteractor.Status> {
         return countryLanguageInteractor.getLanguageState()
             .mapToStateFlow(viewModelScope, CountryLanguageInteractor.Status.LOADING) { it.status }
     }
 
-    //todo combine with isReverseSortEnabled
     fun getLanguages(): StateFlow<List<CountryLanguageQuery.Country?>> {
         return countryLanguageInteractor.getLanguageState()
+            .combineToStateFlow(
+                viewModelScope,
+                Pair(LanguageState.loading(), false),
+                this.isReverseSortEnabled
+            ) { languages, isReverse ->
+                return@combineToStateFlow Pair(languages, isReverse)
+            }
             .mapToStateFlow(viewModelScope, emptyList()) {
-                if (it.data?.countries != null) {
-                    return@mapToStateFlow (it.data.countries.reversed())
+                if (it.first.data?.countries != null && it.second) {
+                    return@mapToStateFlow (it.first.data?.countries!!.reversed())
+                } else if (it.first.data?.countries != null && !it.second) {
+                    return@mapToStateFlow (it.first.data?.countries!!)
                 } else {
-                    return@mapToStateFlow (emptyList<CountryLanguageQuery.Country?>())
+                    return@mapToStateFlow (emptyList())
                 }
             }
     }
