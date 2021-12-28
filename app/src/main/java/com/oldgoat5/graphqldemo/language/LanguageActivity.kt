@@ -21,7 +21,6 @@ import com.oldgoat5.graphqldemo.common.observers.RecyclerAdapterObserver
 import com.oldgoat5.graphqldemo.common.observers.VisibilityObserver
 import dagger.hilt.android.AndroidEntryPoint
 import kotlinx.coroutines.flow.collect
-import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.launch
 
 @AndroidEntryPoint
@@ -39,10 +38,8 @@ class LanguageActivity : ViewModelActivity<LanguageViewModel>() {
 
         actionBar?.title = "Languages"
 
-        sortSwitch.setOnCheckedChangeListener { buttonView, isChecked ->
-            viewModel.setReverseSortEnabled(
-                isChecked
-            )
+        sortSwitch.setOnCheckedChangeListener { _, isChecked ->
+            viewModel.setReverseSortEnabled(isChecked)
         }
 
         val languageAdapter = LanguageAdapter()

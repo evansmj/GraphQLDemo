@@ -10,7 +10,6 @@ import com.oldgoat5.graphqldemo.common.mapToStateFlow
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.*
 import kotlinx.coroutines.launch
-import okhttp3.internal.notifyAll
 import javax.inject.Inject
 
 @HiltViewModel
@@ -34,16 +33,16 @@ class LanguageViewModel @Inject constructor(
         return countryLanguageInteractor.getLanguageState()
             .combineToStateFlow(
                 viewModelScope,
-                Pair(LanguageState.loading(), false),
+                LanguagesIsReversePair(LanguageState.loading(), false),
                 this.isReverseSortEnabled
             ) { languages, isReverse ->
-                return@combineToStateFlow Pair(languages, isReverse)
+                return@combineToStateFlow LanguagesIsReversePair(languages, isReverse)
             }
             .mapToStateFlow(viewModelScope, emptyList()) {
-                if (it.first.data?.countries != null && it.second) {
-                    return@mapToStateFlow (it.first.data?.countries!!.reversed())
-                } else if (it.first.data?.countries != null && !it.second) {
-                    return@mapToStateFlow (it.first.data?.countries!!)
+                if (it.languages.data?.countries != null && it.isReverse) {
+                    return@mapToStateFlow (it.languages.data.countries.reversed())
+                } else if (it.languages.data?.countries != null && !it.isReverse) {
+                    return@mapToStateFlow (it.languages.data.countries)
                 } else {
                     return@mapToStateFlow (emptyList())
                 }
@@ -60,3 +59,8 @@ class LanguageViewModel @Inject constructor(
         }
     }
 }
+
+private data class LanguagesIsReversePair(
+    val languages: LanguageState<CountryLanguageQuery.Data>,
+    val isReverse: Boolean
+)
